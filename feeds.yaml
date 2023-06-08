@@ -1,0 +1,22 @@
+- theme: ai
+  feeds:
+    - url: http://news.mit.edu/rss/topic/artificial-intelligence2
+      title: AI News
+    - url: http://feeds.feedburner.com/nvidiablog
+      title: AI nvidiablog
+    - url: https://www.reddit.com/r/artificial/.rss
+      title: Reddit AI
+    - url: https://www.artificialintelligence-news.com/feed/rss/
+      title: AI News 2
+- theme: ml
+  feeds:
+    - url: https://www.reddit.com/r/MachineLearning/.rss
+      title: ML reddit
+    # - url: https://bair.berkeley.edu/blog/feed.xml
+    #   title: ML berkeley
+- theme: world
+  feeds:
+    - url: http://feeds.bbci.co.uk/news/world/rss.xml
+      title: BBC World News
+    - url: https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/section/world/rss.xml
+      title: NewYTimes
