@@ -1,20 +1,25 @@
-use clap::{Arg, command};
+#[allow(unused_variables)]
+
+use clap::{arg, command};
 use serde_derive::Deserialize;
 use std::fs::File;
 use std::io::Read;
 use reqwest;
 
+#[derive(Clone)]
 #[derive(Debug, Deserialize)]
 struct Config {
     themes: Vec<Theme>,
 }
 
+#[derive(Clone)]
 #[derive(Debug, Deserialize)]
 struct Theme {
     theme: String,
     feeds: Vec<Feed>,
 }
 
+#[derive(Clone)]
 #[derive(Debug, Deserialize)]
 struct Feed {
     url: String,
@@ -26,59 +31,50 @@ fn main() {
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("Failed to read FEEDS.YAML file");
 
-    let config: Config = serde_yaml::from_str(&contents).expect("Failed to parse FEEDS.YAML file");
-    let mut theme_options: Vec<&str> = vec![];
-    for theme in &config.themes {
-        theme_options.push(&theme.theme);
-    }
-    
+    let config: Config = serde_yaml::from_str(&contents)
+        .expect("Failed to parse FEEDS.YAML file");
+
+    let theme_options: Vec<String> = config
+        .themes
+        .into_iter()
+        .map(|theme| theme.theme)
+        .collect();
+
+    let help_message = format!(
+        "Themes to use: {}", theme_options.join(", ")
+    );
+
     let matches = command!()
         .arg(
-            Arg::new("theme")
-                .short('t')
-                .long("theme")                
-            )
-        
+            arg!(-t --theme <theme>)
+                .help(help_message)
+                .required(true),
+        )
         .get_matches();
-    
-    let selected_theme = matches.get_one::<String>("theme").unwrap();
 
-    let theme = config.themes.iter().find(|t| t.theme == *selected_theme);
-    if let Some(theme) = theme {
+    let selected_theme  = matches.get_one::<String>("theme").expect("Select a proper theme from existing list. Use help for more info.");
+    println!("Selected theme: {}", selected_theme );
+
+    let selected_theme_clone = selected_theme.clone();
+    if let Some(theme) = config.themes.iter().find(|t| &t.theme == selected_theme.as_str()) {
         println!("Selected theme: {}", theme.theme);
         for (index, feed) in theme.feeds.iter().enumerate() {
             println!("{}. {}", index + 1, feed.title);
         }
-        let feed_index: usize = read_user_input("Enter feed number: ") - 1;
-
-        if let Some(feed) = theme.feeds.get(feed_index) {
+    
+        if let Some(feed) = theme.feeds.get(0) {
             let client = reqwest::blocking::Client::new();
             let response = client
                 .get(&feed.url)
                 .send()
                 .expect("Failed to send request");
-
-            println!("RSS feed {}", response.text().expect("Failed to parse RSS feed"));            
+    
+            println!("RSS feed {}", response.text().expect("Failed to parse RSS feed"));
         } else {
-            println!("Feed {} not found", feed_index + 1);
+            println!("No feeds found for the selected theme");
         }
     } else {
         println!("Theme {} not found", selected_theme);
     }
 }
 
-fn read_user_input(prompt: &str) -> usize {
-    loop {
-        println!("{}", prompt);
-
-        let mut input = String::new();
-        std::io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read user input");
-
-        match input.trim().parse::<usize>() {
-            Ok(num) => return num,
-            Err(_) => println!("Invalid input. Please enter a valid number."),
-        }
-    }
-}
